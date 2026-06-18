@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · Proyecto 8</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <a href="../admin/" class="nav-logo">
+      <img src="../assets/images/logo.png" alt="P8" style="height:32px">
+      <span class="logo-text">Admin</span>
+    </a>
+    <div class="admin-user">
+      <span id="adminName">Admin</span>
+      <button class="btn btn-outline btn-logout" id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <div class="admin-container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:16px">
+      <h1 style="font-size:1.5rem">Panel de Administración</h1>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="children.html" class="btn btn-primary">Gestión de Niños</a>
+        <a href="attendance.html" class="btn btn-outline">Asistencia</a>
+        <a href="reports.html" class="btn btn-outline">Reportes</a>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="admin-stats" id="dashboardStats">
+      <div class="admin-stat">
+        <span class="stat-number" id="totalChildren">0</span>
+        <span class="stat-label">Niños registrados</span>
+      </div>
+      <div class="admin-stat">
+        <span class="stat-number" id="totalPrograms">0</span>
+        <span class="stat-label">Programas activos</span>
+      </div>
+      <div class="admin-stat">
+        <span class="stat-number" id="todayAttendance">0</span>
+        <span class="stat-label">Asistencia hoy</span>
+      </div>
+      <div class="admin-stat">
+        <span class="stat-number" id="totalTutors">0</span>
+        <span class="stat-label">Tutores registrados</span>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="admin-card">
+      <h2>Asistencia de Hoy</h2>
+      <div id="todayAttendanceList">
+        <p class="text-muted">Cargando...</p>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <h2>Accesos Rápidos</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+        <a href="children.html" style="display:block;padding:24px;background:var(--color-bg-alt);border-radius:var(--radius-sm);border:1px solid var(--color-border);text-align:center">
+          <strong style="display:block;margin-bottom:4px">Registrar Niño</strong>
+          <span class="text-muted" style="font-size:0.85rem">Añadir nuevo beneficiario</span>
+        </a>
+        <a href="attendance.html" style="display:block;padding:24px;background:var(--color-bg-alt);border-radius:var(--radius-sm);border:1px solid var(--color-border);text-align:center">
+          <strong style="display:block;margin-bottom:4px">Tomar Asistencia</strong>
+          <span class="text-muted" style="font-size:0.85rem">Registrar entrada/salida</span>
+        </a>
+        <a href="reports.html" style="display:block;padding:24px;background:var(--color-bg-alt);border-radius:var(--radius-sm);border:1px solid var(--color-border);text-align:center">
+          <strong style="display:block;margin-bottom:4px">Ver Reportes</strong>
+          <span class="text-muted" style="font-size:0.85rem">Estadísticas de asistencia</span>
+        </a>
+        <a href="../portal/index.html" style="display:block;padding:24px;background:var(--color-bg-alt);border-radius:var(--radius-sm);border:1px solid var(--color-border);text-align:center">
+          <strong style="display:block;margin-bottom:4px">Portal Tutores</strong>
+          <span class="text-muted" style="font-size:0.85rem">Acceso para padres</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script>
+    // Auth check
+    const session = JSON.parse(localStorage.getItem('p8-admin') || 'null');
+    if (!session) window.location.href = 'index.html';
+    document.getElementById('adminName').textContent = session.name || 'Admin';
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (auth) auth.signOut();
+      localStorage.removeItem('p8-admin');
+      window.location.href = 'index.html';
+    });
+
+    // Load stats
+    async function loadStats() {
+      const data = JSON.parse(localStorage.getItem('p8-children') || '[]');
+      document.getElementById('totalChildren').textContent = data.length;
+
+      const programs = JSON.parse(localStorage.getItem('p8-programs') || '["Apoyo Escolar","Acompañamiento","Nutrición","Talleres","Fortalecimiento","Recreación"]');
+      document.getElementById('totalPrograms').textContent = programs.length;
+
+      const attendance = JSON.parse(localStorage.getItem('p8-attendance') || '[]');
+      const today = new Date().toISOString().split('T')[0];
+      const todayRecords = attendance.filter(a => a.date === today);
+      document.getElementById('todayAttendance').textContent = todayRecords.length;
+      document.getElementById('totalTutors').textContent = [...new Set(data.map(c => c.tutorPhone).filter(Boolean))].length;
+
+      // Today's attendance list
+      const list = document.getElementById('todayAttendanceList');
+      if (todayRecords.length === 0) {
+        list.innerHTML = '<p class="text-muted">No hay registros de asistencia hoy.</p>';
+      } else {
+        list.innerHTML = `
+          <table class="data-table">
+            <thead><tr><th>Niño</th><th>Hora Entrada</th><th>Hora Salida</th><th>Estado</th></tr></thead>
+            <tbody>
+              ${todayRecords.map(r => {
+                const child = data.find(c => c.id === r.childId);
+                return `<tr>
+                  <td>${child ? child.name : '—'}</td>
+                  <td>${r.checkIn || '—'}</td>
+                  <td>${r.checkOut || '—'}</td>
+                  <td>${r.checkOut ? '<span class="text-muted">Completado</span>' : '<span style="color:var(--color-secondary)">En curso</span>'}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>

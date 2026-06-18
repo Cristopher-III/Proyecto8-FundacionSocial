@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes · Proyecto 8</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .report-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .report-card {
+      background: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .report-card h3 {
+      font-size: 1rem;
+      margin-bottom: 16px;
+    }
+    .chart-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .chart-bar .bar-label {
+      width: 140px;
+      font-size: 0.85rem;
+      text-align: right;
+      color: var(--color-text-light);
+    }
+    .chart-bar .bar-fill {
+      flex: 1;
+      height: 24px;
+      background: var(--color-bg-alt);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .chart-bar .bar-fill span {
+      display: block;
+      height: 100%;
+      background: var(--color-primary);
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+    .chart-bar .bar-value {
+      width: 40px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+    @media (max-width: 768px) {
+      .report-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <a href="dashboard.html" class="nav-logo">
+      <img src="../assets/images/logo.png" alt="P8" style="height:32px">
+      <span class="logo-text">Reportes</span>
+    </a>
+    <div class="admin-user">
+      <span id="adminName">Admin</span>
+      <button class="btn btn-outline btn-logout" id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <div class="admin-container">
+    <h1 style="font-size:1.3rem;margin-bottom:24px">Reportes y Estadísticas</h1>
+
+    <div class="report-grid">
+      <div class="report-card">
+        <h3>Niños por Programa</h3>
+        <div id="programChart"></div>
+      </div>
+      <div class="report-card">
+        <h3>Asistencia por Día (últimos 7 días)</h3>
+        <div id="weeklyChart"></div>
+      </div>
+      <div class="report-card">
+        <h3>Resumen General</h3>
+        <div id="generalSummary"></div>
+      </div>
+      <div class="report-card">
+        <h3>Asistencia por Programa (hoy)</h3>
+        <div id="programAttendanceChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script>
+    const session = JSON.parse(localStorage.getItem('p8-admin') || 'null');
+    if (!session) window.location.href = 'index.html';
+    document.getElementById('adminName').textContent = session.name || 'Admin';
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('p8-admin');
+      window.location.href = 'index.html';
+    });
+
+    const children = JSON.parse(localStorage.getItem('p8-children') || '[]');
+    const attendance = JSON.parse(localStorage.getItem('p8-attendance') || '[]');
+    const todayKey = new Date().toISOString().split('T')[0];
+
+    // 1. Children by program
+    function renderProgramChart() {
+      const container = document.getElementById('programChart');
+      const programs = {};
+      children.forEach(c => {
+        programs[c.program] = (programs[c.program] || 0) + 1;
+      });
+
+      const entries = Object.entries(programs).sort((a, b) => b[1] - a[1]);
+      const max = Math.max(...entries.map(e => e[1]), 1);
+
+      container.innerHTML = entries.map(([prog, count]) => `
+        <div class="chart-bar">
+          <span class="bar-label">${prog}</span>
+          <div class="bar-fill">
+            <span style="width:${(count / max) * 100}%"></span>
+          </div>
+          <span class="bar-value">${count}</span>
+        </div>
+      `).join('') || '<p class="text-muted">Sin datos</p>';
+    }
+
+    // 2. Weekly attendance
+    function renderWeeklyChart() {
+      const container = document.getElementById('weeklyChart');
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        const dayName = d.toLocaleDateString('es-ES', { weekday: 'short' });
+        const count = attendance.filter(a => a.date === key && a.checkIn).length;
+        days.push({ key, label: dayName, count });
+      }
+
+      const max = Math.max(...days.map(d => d.count), 1);
+      container.innerHTML = days.map(d => `
+        <div class="chart-bar">
+          <span class="bar-label">${d.label}</span>
+          <div class="bar-fill">
+            <span style="width:${(d.count / max) * 100}%"></span>
+          </div>
+          <span class="bar-value">${d.count}</span>
+        </div>
+      `).join('');
+    }
+
+    // 3. General summary
+    function renderSummary() {
+      const container = document.getElementById('generalSummary');
+      const active = children.filter(c => c.status === 'Activo').length;
+      const withTutor = children.filter(c => c.tutor).length;
+      const todayPresent = attendance.filter(a => a.date === todayKey && a.checkIn).length;
+      const totalAttendance = attendance.filter(a => a.checkIn).length;
+
+      container.innerHTML = `
+        <div style="display:grid;gap:16px">
+          <div><strong>Total niños:</strong> ${children.length}</div>
+          <div><strong>Activos:</strong> ${active}</div>
+          <div><strong>Con tutor asignado:</strong> ${withTutor}</div>
+          <div><strong>Asistencia hoy:</strong> ${todayPresent}</div>
+          <div><strong>Registros totales:</strong> ${totalAttendance}</div>
+        </div>
+      `;
+    }
+
+    // 4. Attendance by program today
+    function renderProgramAttendance() {
+      const container = document.getElementById('programAttendanceChart');
+      const programs = {};
+      children.forEach(c => {
+        if (!programs[c.program]) {
+          programs[c.program] = { total: 0, present: 0 };
+        }
+        programs[c.program].total++;
+        const record = attendance.find(a => a.childId === c.id && a.date === todayKey);
+        if (record && record.checkIn) {
+          programs[c.program].present++;
+        }
+      });
+
+      const entries = Object.entries(programs);
+      const max = Math.max(...entries.map(e => e[1].total), 1);
+
+      container.innerHTML = entries.map(([prog, data]) => `
+        <div class="chart-bar">
+          <span class="bar-label">${prog}</span>
+          <div class="bar-fill">
+            <span style="width:${(data.present / data.total) * 100}%;background:var(--color-accent)"></span>
+          </div>
+          <span class="bar-value">${data.present}/${data.total}</span>
+        </div>
+      `).join('') || '<p class="text-muted">Sin datos</p>';
+    }
+
+    renderProgramChart();
+    renderWeeklyChart();
+    renderSummary();
+    renderProgramAttendance();
+  </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Proyecto 8</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .login-card .form-row input {
+      text-align: left;
+    }
+  </style>
+</head>
+<body class="login-page">
+  <div class="login-card">
+    <img src="../assets/images/logo.png" alt="Proyecto 8" style="width:80px;margin:0 auto 16px;display:block">
+    <h2>Admin · Proyecto 8</h2>
+    <p>Inicia sesión para gestionar la fundación</p>
+    <div class="login-error" id="loginError">Usuario o contraseña incorrectos</div>
+    <form id="loginForm">
+      <div class="form-row">
+        <input type="email" id="loginEmail" placeholder="Correo electrónico" required>
+      </div>
+      <div class="form-row">
+        <input type="password" id="loginPassword" placeholder="Contraseña" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:14px">Iniciar Sesión</button>
+    </form>
+    <p style="margin-top:24px;font-size:0.8rem">
+      <a href="../" style="color:var(--color-primary)">← Volver al sitio</a>
+    </p>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const loginError = document.getElementById('loginError');
+
+    // Demo mode: accesible sin Firebase
+    const DEMO_EMAIL = 'admin@proyecto8.org';
+    const DEMO_PASS = 'admin123';
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const btn = loginForm.querySelector('.btn');
+      btn.textContent = 'Ingresando...';
+      btn.disabled = true;
+
+      try {
+        if (auth) {
+          await auth.signInWithEmailAndPassword(email, password);
+          window.location.href = 'dashboard.html';
+        } else {
+          throw new Error('No Firebase');
+        }
+      } catch (err) {
+        // Demo fallback
+        if (email === DEMO_EMAIL && password === DEMO_PASS) {
+          localStorage.setItem('p8-admin', JSON.stringify({ email, name: 'Admin' }));
+          window.location.href = 'dashboard.html';
+        } else {
+          loginError.classList.add('show');
+          btn.textContent = 'Iniciar Sesión';
+          btn.disabled = false;
+        }
+      }
+    });
+
+    // Check if already logged in
+    const session = localStorage.getItem('p8-admin');
+    if (session) {
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>

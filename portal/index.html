@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Tutores · Proyecto 8</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .portal-header {
+      background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+      color: #fff;
+      padding: 60px 24px;
+      text-align: center;
+    }
+    .portal-header h1 {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+    .portal-header p {
+      opacity: 0.8;
+      font-size: 1rem;
+    }
+    .portal-card {
+      max-width: 600px;
+      margin: 40px auto;
+      background: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      text-align: center;
+    }
+    .portal-card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+    .portal-card > p {
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    .portal-card input {
+      text-align: center;
+      max-width: 320px;
+      margin: 0 auto 16px;
+    }
+    .child-summary {
+      text-align: left;
+      margin-top: 24px;
+    }
+    .child-summary .child-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--color-bg-alt);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+    }
+    .child-summary .child-header h3 {
+      font-size: 1.1rem;
+    }
+    .child-summary .child-header span {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+    }
+    .attendance-log {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .attendance-log .log-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--color-card-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+    }
+    .attendance-log .log-item .log-date {
+      color: var(--color-text-muted);
+    }
+    .attendance-log .log-item .log-status {
+      font-weight: 600;
+    }
+    .attendance-log .log-item .log-status.present {
+      color: var(--color-accent);
+    }
+    .attendance-log .log-item .log-status.absent {
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="../" class="nav-logo">
+        <img src="../assets/images/logo.png" alt="Proyecto 8" style="height:40px">
+        <span class="logo-text">Proyecto 8</span>
+      </a>
+      <ul class="nav-menu">
+        <li><a href="../" class="nav-link">← Volver al inicio</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="portal-header">
+    <h1>Portal de Tutores</h1>
+    <p>Consulta la asistencia de tus hijos</p>
+  </div>
+
+  <div class="container">
+    <div class="portal-card">
+      <h2>Busca por tu teléfono</h2>
+      <p>Ingresa el número de teléfono que registraste como tutor</p>
+      <input type="tel" id="tutorPhone" placeholder="Ej: 1234567890">
+      <button class="btn btn-primary" id="searchTutor" style="width:100%">Consultar</button>
+      <div id="tutorResults" class="child-summary"></div>
+    </div>
+  </div>
+
+  <script>
+    const searchBtn = document.getElementById('searchTutor');
+    const phoneInput = document.getElementById('tutorPhone');
+    const results = document.getElementById('tutorResults');
+
+    searchBtn.addEventListener('click', () => {
+      const phone = phoneInput.value.trim();
+      if (!phone) {
+        results.innerHTML = '<p class="text-muted" style="margin-top:16px">Ingresa un número de teléfono</p>';
+        return;
+      }
+
+      const children = JSON.parse(localStorage.getItem('p8-children') || '[]');
+      const attendance = JSON.parse(localStorage.getItem('p8-attendance') || '[]');
+
+      const myChildren = children.filter(c =>
+        c.tutorPhone && c.tutorPhone.includes(phone)
+      );
+
+      if (myChildren.length === 0) {
+        results.innerHTML = '<p class="text-muted" style="margin-top:16px">No se encontraron niños asociados a este teléfono.</p>';
+        return;
+      }
+
+      results.innerHTML = myChildren.map(child => {
+        const childLogs = attendance
+          .filter(a => a.childId === child.id)
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, 10);
+
+        const statusColor = child.status === 'Activo' ? 'var(--color-accent)' : '#e74c3c';
+
+        return `
+          <div style="margin-bottom:20px">
+            <div class="child-header">
+              <div>
+                <h3>${child.name}</h3>
+                <span>${child.age} años · ${child.program}</span>
+              </div>
+              <span style="color:${statusColor};font-weight:600">${child.status}</span>
+            </div>
+            <h4 style="font-size:0.9rem;margin-bottom:8px;color:var(--color-text-muted)">Últimos registros de asistencia:</h4>
+            <div class="attendance-log">
+              ${childLogs.length > 0 ? childLogs.map(log => {
+                const dateObj = new Date(log.date + 'T00:00:00');
+                const dateStr = dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+                const isPresent = log.checkIn;
+                return `
+                  <div class="log-item">
+                    <span class="log-date">${dateStr}</span>
+                    <span style="font-size:0.85rem">${log.checkIn || '—'} - ${log.checkOut || '—'}</span>
+                    <span class="log-status ${isPresent ? 'present' : 'absent'}">${isPresent ? '✓ Presente' : '✗ Ausente'}</span>
+                  </div>
+                `;
+              }).join('') : '<p class="text-muted" style="font-size:0.85rem">Sin registros de asistencia</p>'}
+            </div>
+          </div>
+        `;
+      }).join('');
+    });
+
+    // Allow Enter key
+    phoneInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') searchBtn.click();
+    });
+  </script>
+</body>
+</html>
