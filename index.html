@@ -241,12 +241,14 @@
           </div>
           <input type="text" id="contactSubject" placeholder="Asunto">
           <textarea id="contactMessage" rows="5" placeholder="Escribe tu mensaje..." required></textarea>
-          <div class="form-row form-radio">
-            <label>¿Qué te interesa?</label>
-            <label class="radio-label"><input type="radio" name="interest" value="donar"> Donar</label>
-            <label class="radio-label"><input type="radio" name="interest" value="voluntario"> Ser voluntario</label>
-            <label class="radio-label"><input type="radio" name="interest" value="inscribir"> Inscribir a un niño</label>
-            <label class="radio-label"><input type="radio" name="interest" value="otro"> Otro</label>
+          <div class="form-radio">
+            <label class="form-radio-label">¿Qué te interesa?</label>
+            <div class="radio-group">
+              <label class="radio-label"><input type="radio" name="interest" value="donar"> Donar</label>
+              <label class="radio-label"><input type="radio" name="interest" value="voluntario"> Ser voluntario</label>
+              <label class="radio-label"><input type="radio" name="interest" value="inscribir"> Inscribir a un niño</label>
+              <label class="radio-label"><input type="radio" name="interest" value="otro"> Otro</label>
+            </div>
           </div>
           <button type="submit" class="btn btn-primary btn-submit">Enviar mensaje</button>
         </form>
