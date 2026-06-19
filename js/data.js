@@ -134,27 +134,37 @@ const SITE_DATA = {
     { id: 12, label: 'Celebrandonos juntos', color: '#ef6117' }
   ],
 
-  /* ---- Equipo (pendiente de nombres reales) ---- */
+  /* ---- Equipo de Trabajo ---- */
   team: [
     {
-      name: 'Equipo Docente',
-      role: 'Educadoras',
-      desc: 'Docentes comprometidas con el bienestar infantil, la educación de calidad y la formación integral de los niños y niñas.'
+      name: 'Julia González Tovar',
+      role: 'Directora de la Fundación',
+      desc: 'Técnica en Auxiliar de Preescolar, diplomada en Pedagogía y Educación Inclusiva. Estudiante de Básica Primaria en la Universidad Mariana.'
     },
     {
-      name: 'Equipo de Apoyo',
-      role: 'Profesionales',
-      desc: 'Profesionales que fortalecen nuestro trabajo mediante acompañamiento psicosocial y familiar.'
+      name: 'Johana González',
+      role: 'Subdirectora',
+      desc: 'Administradora Pública, especialista en Gerencia Financiera. Diplomada en Finanzas Corporativas y Reestructuración Empresarial.'
     },
     {
-      name: 'Practicantes',
-      role: 'Universitarios',
-      desc: 'Estudiantes en práctica de diversas áreas que aportan experiencia y compromiso social a nuestros programas.'
+      name: 'Paula de la Cruz',
+      role: 'Coordinadora Académica',
+      desc: 'Licenciada en Lengua Castellana y Literatura, magíster en Pedagogía por la Universidad Mariana.'
     },
     {
-      name: 'Voluntarios',
-      role: 'Colaboradores',
-      desc: 'Personas comprometidas que donan su tiempo y talento para acompañar a los niños de la comunidad.'
+      name: 'Francisco Yaqueno Jurado',
+      role: 'Representante de Asamblea',
+      desc: 'Biólogo de la Universidad de Nariño, coordinador de Proyectos Ambientales.'
+    },
+    {
+      name: 'Luz Dary',
+      role: 'Docente',
+      desc: 'Auxiliar de Preescolar, comprometida con la educación y el bienestar infantil.'
+    },
+    {
+      name: 'Yesica Imbajoa',
+      role: 'Docente',
+      desc: 'Formación en Primera Infancia y profesora de Matemáticas, dedicada a fortalecer el aprendizaje de los niños.'
     }
   ],
 
